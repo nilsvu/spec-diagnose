@@ -6,11 +6,14 @@ import h5py
 import numpy as np
 
 
-def FindLatestSegments(EvDir, Lev, interval=1e10):
+def FindLatestSegments(EvDir, Lev, tmin=-1e10, tmax=1e10, WithRingdown=True):
     """
 Search through a usual SpEC segment structure, to find all
-segments within a time 'interval' of the last
-existing segment.
+segments with start-time tmin < tastart < tmax.  Negative 
+tmin count from the end of the run, e.g. use tmin=-20 to 
+find the very last few segments.
+
+if WithRingdown==False, exclude ringdown segments
 
 Procedure:
 1. Assemble list of existing directories
@@ -34,23 +37,46 @@ RETURNS
     if not os.path.isdir(EvDir):
         raise IOError("Directory {} does not exist".format(EvDir))
 
-    # find segments under consideration
-    tmp=os.path.join(EvDir,"Lev{}_Ringdown/Lev{}_*".format(Lev,Lev),'Run')
-    all_segments=sorted(glob.glob(tmp),reverse=True)
-
+    # find all segments
     tmp=os.path.join(EvDir,"Lev{}_*".format(Lev),'Run')
-    all_segments.extend(sorted(glob.glob(tmp),reverse=True))
+    all_segments=sorted(glob.glob(tmp))
+
+    if WithRingdown:
+        tmp=os.path.join(EvDir,"Lev{}_Ringdown/Lev{}_*".format(Lev,Lev),'Run')
+        all_segments.extend(sorted(glob.glob(tmp)))
+
 
     segments=[]
     tstart=[]
     term_reason=[]
+    tend=None
     for seg in all_segments:
-        tmp=os.path.join(seg,'RestartTimes.txt')
-        if not os.path.exists(tmp):
-            raise IOError("{} not found -- don't yet know how to handle this".format(tmp))
-        RestartTimes=np.loadtxt(tmp,
-                                ndmin=1   # so it always returns an array
-                               )
+        if seg[-7:]=='_AA/Run':
+            # first segment (inspiral or ringdown), where RestartTimes.txt
+            # is not reporting the initial start of the run
+            # take Evolution.input instead
+            # (other potential options:
+            # - Hist-GrDomain.input (seems to carry over entry for last seg)
+            tmp=os.path.join(seg,'Evolution.input')
+            if not os.path.exists(tmp):
+                raise IOError("{}--did not find Evolutiuon.input".format(s))
+            p=re.compile("^ *StartTime *= *(.+); *\n")
+            for line in open(tmp):
+                m=p.match(line)
+                if m:
+                    #print("seg={}--p.group(1)={}".format(seg,p.group(1)))
+                    StartTime=float(m.group(1))
+        else: # standard non-_AA segment
+            tmp=os.path.join(seg,'RestartTimes.txt')
+            if not os.path.exists(tmp):
+                raise IOError("{} not found -- don't yet know how to handle this".format(tmp))
+            restarts=np.loadtxt(tmp,
+                     ndmin=1   # so it always returns an array
+    )
+            StartTime=restarts[0]
+
+            # overwrite to find very last restart time
+            tend=restarts[-1]
 
         tmp=os.path.join(seg,'TerminationReason.txt')
         if os.path.exists(tmp):
@@ -63,15 +89,25 @@ RETURNS
             TerminationReason='ongoing'
 
         segments.append(seg)
-        tstart.append(RestartTimes[0])
+        tstart.append(StartTime)
         term_reason.append(TerminationReason)
-        if tstart[0]-tstart[-1] > interval:
-            break
 
-    segments.reverse()
-    tstart.reverse()
-    term_reason.reverse()
-    return segments, tstart,term_reason
+    if tend is None:
+        print('tend is None -- this should only happen if there is only a Lev?_AA directory')
+        print('using heuristic for tend')
+        tend=tstart[-1]  # use start of last segment as approx of end-time
+    if(tmin<0): tmin = tend+tmin
+    seg_=[]
+    tstart_=[]
+    term_reason_=[]
+    #print("tstart={}".format(tstart))
+    for s, t, r in zip(segments, tstart, term_reason):
+        #print(" --- tmin={},  t={},  tmax={}".format(tmin, t, tmax))
+        if t>tmin and t<tmax:
+            seg_.append(s)
+            tstart_.append(t)
+            term_reason_.append(r)
+    return seg_, tstart_,term_reason_
 
 
 
