@@ -82,4 +82,49 @@ Make a plot of constraints.
         ax.plot(data[:,0],data[:,1],color='grey', lw=0.5)
 
     ax.set_xlabel('t/M')
+    ax.legend()
+    ax.set_yscale('log')
+
+
+
+def PlotAH(ax, AH_dat, NormalizeRadii=True, title=None):
+    """PlotAH(ax, AH)
+    plot useful information about an apparent horizon.
+    ax - axis object into which to plot the data
+    AH - a dictionary with columns from Ah?.dat, as read by LoadDat_from_segments
+ """
+
+    # Plot rmin and rmax, possibly normalized
+    if NormalizeRadii:
+        norm=AH_dat['sqrt(Area/16pi)'][:,1]
+        label_postfix='/Mirr'
+    else:
+        norm=1.
+        label_postfix=''
+
+    for q in 'min', 'max':
+        # get a color for both curves
+        color=next(ax._get_lines.prop_cycler)['color']
+        tmp=q+'(r)'
+        d=AH_dat[tmp]
+        ax.plot(d[:,0],d[:,1]/norm,color=color, label=tmp+label_postfix)
+        tmp=q+'(|r^i-c^i|)'
+        d=AH_dat[tmp]
+        ax.plot(d[:,0],d[:,1]/norm, '--', color=color, label=tmp+label_postfix)
+
+    # plot remaining quantities
+    d=AH_dat['sqrt(Area/16pi)']
+    ax.plot(d[:,0],d[:,1],label='Mirr')
+
+    d=AH_dat['L_surface']
+    ax.plot(d[:,0],d[:,1]/10, label='L_surface/10')
+    d=AH_dat['NumIterations']
+    ax.plot(d[:,0],d[:,1]/10, lw=0.5, color='grey', label='Niterations/10')
+    d=AH_dat['convg reason']
+    ax.plot(d[:,0],d[:,1]/10, 'k--', lw=0.5, label='convg reason/10')
+
+    ax.set_xlabel('t/M')
     ax.legend();
+
+    if title is not None:
+        ax.set_title(title,fontsize='x-large')
