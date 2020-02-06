@@ -55,8 +55,6 @@ RETURNS
             # first segment (inspiral or ringdown), where RestartTimes.txt
             # is not reporting the initial start of the run
             # take Evolution.input instead
-            # (other potential options:
-            # - Hist-GrDomain.input (seems to carry over entry for last seg)
             tmp=os.path.join(seg,'Evolution.input')
             if not os.path.exists(tmp):
                 raise IOError("{}--did not find Evolutiuon.input".format(s))
@@ -66,15 +64,22 @@ RETURNS
                 if m:
                     #print("seg={}--p.group(1)={}".format(seg,p.group(1)))
                     StartTime=float(m.group(1))
+            tmp=os.path.join(seg,'RestartTimes.txt')
+            if os.path.exists(tmp):
+                # if we've got restarts, use them for an approximate tend
+                restarts=np.loadtxt(tmp,
+                                    ndmin=1   # so it always returns an array
+                                    )
+                tend=restarts[-1]
+
         else: # standard non-_AA segment
             tmp=os.path.join(seg,'RestartTimes.txt')
             if not os.path.exists(tmp):
-                raise IOError("{} not found -- don't yet know how to handle this".format(tmp))
+                raise IOError("{} not found--don't yet know how to handle this".format(tmp))
             restarts=np.loadtxt(tmp,
-                     ndmin=1   # so it always returns an array
-    )
+                                ndmin=1   # so it always returns an array
+                                )
             StartTime=restarts[0]
-
             # overwrite to find very last restart time
             tend=restarts[-1]
 
@@ -92,11 +97,15 @@ RETURNS
         tstart.append(StartTime)
         term_reason.append(TerminationReason)
 
-    if tend is None:
-        print('tend is None -- this should only happen if there is only a Lev?_AA directory')
-        print('using heuristic for tend')
-        tend=tstart[-1]  # use start of last segment as approx of end-time
-    if(tmin<0): tmin = tend+tmin
+    if tmin<0 and tmin!=-1e10:
+        if tend is None and len(tstart)==0:
+            print('specified tmin<0, which requires an estimate for tend.')
+            print('No such estimate could be obtained, b/c run too short.')
+            print('Therefore, tmin will be ignored.')
+        else:
+            tend=tstart[-1]  # use start of last segment as approx of end-time
+            tmin = tend+tmin
+
     seg_=[]
     tstart_=[]
     term_reason_=[]
