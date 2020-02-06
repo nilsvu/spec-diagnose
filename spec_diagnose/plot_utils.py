@@ -43,8 +43,12 @@ SD         -- name of the spherical shell to be plotted
     c1=next(ax._get_lines.prop_cycler)['color']
     c2=next(ax._get_lines.prop_cycler)['color']
 
-    ax.plot(t,(Nr-20.)/10,color=c1, label='(Nr-20)/10')
-    ax.plot(t,(Ntheta-20.)/10,color=c2,label='(Ntheta-20)/10')
+    #ax.plot(t,(Nr-20.)/10,'C0o', color=c1, label='(Nr-20)/10')
+    #ax.plot(t,(Ntheta-20.)/10, 'C0o', color=c2,label='(Ntheta-20)/10')
+    # 'pre':  at time-steps of adjustment, the value reported in
+    #         AdjustGridDiagnostics.h5 is the *old* one.
+    ax.step(t,(Nr-20.)/10,    where='pre', color=c1, label='(Nr-20)/10')
+    ax.step(t,(Ntheta-20.)/10,where='pre', color=c2, label='(Ntheta-20)/10')
 
     tmp=a['Bf0I1']
     ax.plot(tmp[:,0],tmp[:,3],'+-',color=c1,label='TruncErrorExcess - r',linewidth=2)
