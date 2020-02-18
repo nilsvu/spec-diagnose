@@ -36,9 +36,10 @@ SD         -- name of the spherical shell to be plotted
         raise NameError('the name of SD={} must start with \'Sphere\''.format(SD))
     a=AdjustGrid[SD] # shortcut
 
-    t=a['Extents'][:,0]
-    Nr=a['Extents'][:,1]
-    Ntheta=a['Extents'][:,2]
+    t=a['Extents']['Extent[0]'][:,0]
+    Nr=a['Extents']['Extent[0]'][:,1]
+    Ntheta=a['Extents']['Extent[1]'][:,1]
+    
 
     c1=next(ax._get_lines.prop_cycler)['color']
     c2=next(ax._get_lines.prop_cycler)['color']
@@ -50,20 +51,65 @@ SD         -- name of the spherical shell to be plotted
     ax.step(t,(Nr-20.)/10,    where='pre', color=c1, label='(Nr-20)/10')
     ax.step(t,(Ntheta-20.)/10,where='pre', color=c2, label='(Ntheta-20)/10')
 
-    tmp=a['Bf0I1']
-    ax.plot(tmp[:,0],tmp[:,3],'+-',color=c1,label='TruncErrorExcess - r',linewidth=2)
-    tmp=a['Bf1S2']
-    ax.plot(tmp[:,0],tmp[:,3],'+-',color=c2,label='TruncErrorExcess - theta',linewidth=2)
+    tmp=a['Bf0I1']['TruncationErrorExcess']
+    ax.plot(tmp[:,0],tmp[:,1],'+-',color=c1,label='TruncErrorExcess - r',linewidth=2)
+    tmp=a['Bf1S2']['TruncationErrorExcess']
+    ax.plot(tmp[:,0],tmp[:,1],'+-',color=c2,label='TruncErrorExcess - theta',linewidth=2)
     ax.set_xlabel('t/M')
     ax.legend();
     ax.set_title(SD)
+    
 
+def PlotTruncationError_Cylinder(ax, AdjustGrid, SD):
+    """
+Plot quantities relevant to assess truncation error for one spherical shell.
+
+ax -- axis object into which to plot data
+AdjustGrid -- AdjustGrid dictionary, to be indexed by 'SD'
+SD         -- name of the spherical shell to be plotted
+"""
+
+    if SD.startswith('Cylinder'):
+        radial_topology='Bf0I1'
+    elif SD.startswith('FilledCylinder'):
+        radial_topology='Bf1B2Radial'
+    else:
+        raise NameError('the name of SD={} must start with \'Cylinder\' of \'FilledCylinder\''.format(SD))
+    a=AdjustGrid[SD] # shortcut
+
+    t=a['Extents']['Extent[0]'][:,0]
+    Nz=a['Extents']['Extent[0]'][:,1]
+    Nphi=a['Extents']['Extent[1]'][:,1]
+    Nr=a['Extents']['Extent[2]'][:,1]
+
+    c1=next(ax._get_lines.prop_cycler)['color']
+    c2=next(ax._get_lines.prop_cycler)['color']
+    c3=next(ax._get_lines.prop_cycler)['color']
+
+    # 'pre':  at time-steps of adjustment, the value reported in
+    #         AdjustGridDiagnostics.h5 is the *old* one.
+    ax.step(t,(Nz-20.)/10,    where='pre', color=c1, label='(Nz-20)/10')
+    ax.step(t,(Nphi-20.)/10,  where='pre', color=c2, label='(Nphi-20)/10')
+    ax.step(t,(Nr-20.)/10,    where='pre', color=c3, label='(Nr-20)/10')
+
+    
+    # Bf0I1, Bf1B2Radial, Bf0I1
+
+    tmp=a['Bf0I1']['TruncationErrorExcess']
+    ax.plot(tmp[:,0],tmp[:,1],'+-',color=c1,label='TruncErrorExcess - z',linewidth=2)
+    tmp=a['Bf1B2']['TruncationErrorExcess']
+    ax.plot(tmp[:,0],tmp[:,1],'+-',color=c2,label='TruncErrorExcess - phi',linewidth=2)
+    tmp=a[radial_topology]['TruncationErrorExcess']
+    ax.plot(tmp[:,0],tmp[:,1],'+-',color=c3,label='TruncErrorExcess - r',linewidth=2)
+    ax.set_xlabel('t/M')
+    ax.legend();
+    ax.set_title(SD)
 
 def PlotSubdomainConstraints(ax, GhCe, N=5, Ngrey=0):
     """
 Make a plot of constraints.
   ax -- axes to plot into
-  GhCe -- a dictionary containing constaint info, as obtained with segment_utils.LoadDat_from_segments
+  GhCe -- a dictionary containing constraint info, as obtained with segment_utils.LoadDat_from_segments
   title -- title of plot
   N -- plot the N subdomains with largest GhCe
   Ngrey -- plot the next 'Ngrey' subdomains in grey

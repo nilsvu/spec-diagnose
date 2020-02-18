@@ -136,7 +136,7 @@ OPTIONS:
     # helper function for iterative loading
     def LoadFromOpenH5(F, D,dataset_matches='',group_matches=''):
         """Given the open H5-file handle F
-        (either representing teh file, or a group inside the file),
+        (either representing the file, or a group inside the file),
         load all .dat files and store them as elements in the
         directory D.  Recursively descend into each .dir,
         and add those as sub-dictionaries into D
@@ -149,11 +149,24 @@ OPTIONS:
             ):
                 # remove extension for convenience
                 field=k[:-4]
-                tmp=F[k][()]
-                if field in D:
-                    D[field]=np.concatenate((D[field], tmp))
-                else:
-                    D[field]=tmp
+                data=F[k][()]
+                
+                if not field in D:
+                    D[field]={}
+                
+                i = 0
+                for legend in F[k].attrs['Legend']:
+                    legend=legend.decode("utf-8") 
+                    if legend in D[field]:
+                        D[field][legend]=np.concatenate((D[field][legend], data[:,[0,i]]))
+                    else:
+                        D[field][legend]=data[:,[0,i]]
+                    i=i+1
+                
+               # if field in D:
+               #     D[field]=np.concatenate((D[field], data))
+               # else:
+               #     D[field]=data
             if k.endswith('.dir') and re.match(group_matches,F[k].name):
                 field=k[:-4]
                 if field not in D:
