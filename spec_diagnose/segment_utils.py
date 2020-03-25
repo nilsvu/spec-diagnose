@@ -95,6 +95,8 @@ RETURNS
 
         segments.append(seg)
         tstart.append(StartTime)
+        #print("term_reason={}".format(term_reason))
+        #print("TerminationReason={}".format(TerminationReason))
         term_reason.append(TerminationReason)
 
     if tmin<0 and tmin!=-1e10:

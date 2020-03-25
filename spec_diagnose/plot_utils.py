@@ -48,13 +48,39 @@ SD         -- name of the spherical shell to be plotted
     #ax.plot(t,(Ntheta-20.)/10, 'C0o', color=c2,label='(Ntheta-20)/10')
     # 'pre':  at time-steps of adjustment, the value reported in
     #         AdjustGridDiagnostics.h5 is the *old* one.
-    ax.step(t,(Nr-20.)/10,    where='pre', color=c1, label='(Nr-20)/10')
-    ax.step(t,(Ntheta-20.)/10,where='pre', color=c2, label='(Ntheta-20)/10')
+    ax.step(t,(Nr-20.)/10,    where='pre', color=c1, linewidth=2.5, label='(Nr-20)/10')
+    ax.step(t,(Ntheta-20.)/10,where='pre', color=c2, linewidth=2.5, label='(Ntheta-20)/10')
 
-    tmp=a['Bf0I1']['TruncationErrorExcess']
-    ax.plot(tmp[:,0],tmp[:,1],'+-',color=c1,label='TruncErrorExcess - r',linewidth=2)
-    tmp=a['Bf1S2']['TruncationErrorExcess']
-    ax.plot(tmp[:,0],tmp[:,1],'+-',color=c2,label='TruncErrorExcess - theta',linewidth=2)
+    tmp0=a['Bf0I1']
+    ax.plot(tmp0[:,0],tmp0[:,3],'--',color=c1,label='TruncErrorExcess - r',linewidth=1.5)
+    # for data-points where the truncation error is larger than it should be, plot as circles
+    idx0=tmp0[:,3]>0
+    if sum(idx0)>0:
+        ax.plot(tmp0[idx0,0],tmp0[idx0,3],'o',color=c1,label='TruncErrorExcess - r LARGE')
+
+    tmp1=a['Bf1S2']
+    ax.plot(tmp1[:,0],tmp1[:,3],'--',color=c2,label='TruncErrorExcess - theta',linewidth=1.5)
+
+    # for data-points where the truncation error is larger than it should be, plot as circles
+    idx1=tmp1[:,3]>0
+    if sum(idx1)>0:
+       ax.plot(tmp1[idx1,0],tmp1[idx1,3],'o',color=c2,label='TruncErrorExcess - theta LARGE')
+
+    ax.plot(tmp0[:,0],tmp0[:,6],':', linewidth=1.5, color=c1, label='# PileUpModes - r')
+    ax.plot(tmp1[:,0],tmp1[:,6],':', linewidth=1.5, color=c2, label='# PileUpModes - theta')
+
+#<<<<<<< 7b9205b5fd8c3672b0a172ece6085e73e6aade04
+#    tmp=a['Bf0I1']['TruncationErrorExcess']
+#    ax.plot(tmp[:,0],tmp[:,1],'+-',color=c1,label='TruncErrorExcess - r',linewidth=2)
+#    tmp=a['Bf1S2']['TruncationErrorExcess']
+#    ax.plot(tmp[:,0],tmp[:,1],'+-',color=c2,label='TruncErrorExcess - theta',linewidth=2)
+#||||||| merged common ancestors
+#    tmp=a['Bf0I1']
+#    ax.plot(tmp[:,0],tmp[:,3],'+-',color=c1,label='TruncErrorExcess - r',linewidth=2)
+#    tmp=a['Bf1S2']
+#    ax.plot(tmp[:,0],tmp[:,3],'+-',color=c2,label='TruncErrorExcess - theta',linewidth=2)
+#=======
+#>>>>>>> improve plotting of truncation error
     ax.set_xlabel('t/M')
     ax.legend();
     ax.set_title(SD)
