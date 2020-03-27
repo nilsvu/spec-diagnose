@@ -23,92 +23,77 @@ Annote a plot with information where segments begin.
         ax.text(t, y,lev,rotation='vertical',verticalalignment='bottom', clip_on=True)
 
 
-def PlotTruncationError_Sphere(ax, AdjustGrid, SD):
+def PlotTruncationErrorSubdomain(ax, AdjustGrid, SD, PileUpModes=False):
     """
-Plot quantities relevant to assess truncation error for one spherical shell.
+Plot quantities relevant to assess truncation error for one subdomain.
 
 ax -- axis object into which to plot data
 AdjustGrid -- AdjustGrid dictionary, to be indexed by 'SD'
 SD         -- name of the spherical shell to be plotted
 """
 
-    if not SD.startswith('Sphere'):
-        raise NameError('the name of SD={} must start with \'Sphere\''.format(SD))
     a=AdjustGrid[SD] # shortcut
 
+    # ==== get colors ====
+    colors=[next(ax._get_lines.prop_cycler)['color'],
+            next(ax._get_lines.prop_cycler)['color'],
+            next(ax._get_lines.prop_cycler)['color']]
+
+    # ==== construct labels ====
+    labels=['0','1','2']
+    if SD.startswith('Sphere'):
+        labels=['r','theta','phi']
+    if SD.startswith('FilledCylinder') or SD.startswith('Cylinder'):
+        labels=['z','rho','phi']
+        # see B2.hpp and DomainDetails.hpp, line ~ 67
+
+    # plot extents
     t=a['Extents']['Extent[0]'][:,0]
-    Nr=a['Extents']['Extent[0]'][:,1]
-    Ntheta=a['Extents']['Extent[1]'][:,1]
+    idx=0
+    for key in a['Extents'].keys():
+        if key=='time': continue
+        N=a['Extents'][key][:,1]
+        # 'pre':  at time-steps of adjustment, the value reported in
+        #         AdjustGridDiagnostics.h5 is the *old* one.
+        ax.step(t, (N-20.)/10, where='pre', color=colors[idx],
+                linewidth=2.5, label="(N{}-20)/10".format(labels[idx]))
+        idx=idx+1
 
 
-    c1=next(ax._get_lines.prop_cycler)['color']
-    c2=next(ax._get_lines.prop_cycler)['color']
+    # ==== plot basis-functions ====
 
-    # 'pre':  at time-steps of adjustment, the value reported in
-    #         AdjustGridDiagnostics.h5 is the *old* one.
-    ax.step(t,(Nr-20.)/10,    where='pre', color=c1, linewidth=2.5, label='(Nr-20)/10')
-    ax.step(t,(Ntheta-20.)/10,where='pre', color=c2, linewidth=2.5, label='(Ntheta-20)/10')
+    # Step 1: construct list of basisfunctions in correct order
+    bfs=[bf for bf in a.keys() if bf.startswith('Bf')]
+    bfs.sort()  # Harald thinks alphabetical sort is correct ...
+    # ... except for B2Radial ...
+    for k in range(len(bfs)):
+        if 'B2Radial' in bfs[k]:
+            if k!=2 or bfs[k]!='Bf1B2Radial' or bfs[1]!='Bf1B2':
+                print("ERROR names/orders of basisfunctions unexpected. "
+                      "Please check and amend this function."
+                      "SD={}, bfs={}, k={}".format(SD,bfs,k))
+                return
+            # switch order (hardcode strings ok, as we only know how
+            # to do this for these precise strings, cf. test just
+            # above)
+            bfs[1]='Bf1B2Radial'
+            bfs[2]='Bf1B2'
 
-    for (bf, label, color) in ('Bf0I1','r',c1), ('Bf1S2','theta',c2):
-        print(a.keys())
+    # Step 2: plot
+    for idx,bf in enumerate(bfs):
         tmp=a[bf]['TruncationErrorExcess']
-        ax.plot(tmp[:,0],tmp[:,1],'--',color=color,label='TruncErrorExcess - '+label,linewidth=1.5)
-        # for data-points where the truncation error is larger than it should be, plot as circles
-        idx=tmp[:,1]>0
-        if sum(idx)>0:
-            ax.plot(tmp[idx,0],tmp[idx,1],'o',color=color) #,label='TruncErrorExcess - {} LARGE'.format(label))
-        tmp=a['Bf0I1']['MinNumberOfPiledUpModes']
-        ax.plot(tmp[:,0],tmp[:,1],':', linewidth=1.5, color=c1, label='# PileUpModes - '+label)
-
+        ax.plot(tmp[:,0],tmp[:,1],'--',color=colors[idx],label='TruncErrExcess-{}'.format(labels[idx]),linewidth=1.5)
+        tmp_idx=tmp[:,1]>0
+        if sum(tmp_idx)>0:
+            ax.plot(tmp[tmp_idx,0],tmp[tmp_idx,1],'o',color=colors[idx])
+        if PileUpModes:
+            tmp=a[bf]['MinNumberOfPiledUpModes']
+            ax.plot(tmp[:,0],tmp[:,1],':', linewidth=1.5, color=colors[idx], label='# PileUpModes-{}'.format(labels[idx]))
     ax.set_xlabel('t/M')
     ax.legend();
     ax.set_title(SD)
+    return
 
-
-def PlotTruncationError_Cylinder(ax, AdjustGrid, SD):
-    """
-Plot quantities relevant to assess truncation error for one spherical shell.
-
-ax -- axis object into which to plot data
-AdjustGrid -- AdjustGrid dictionary, to be indexed by 'SD'
-SD         -- name of the spherical shell to be plotted
-"""
-
-    if SD.startswith('Cylinder'):
-        radial_topology='Bf0I1'
-    elif SD.startswith('FilledCylinder'):
-        radial_topology='Bf1B2Radial'
-    else:
-        raise NameError('the name of SD={} must start with \'Cylinder\' of \'FilledCylinder\''.format(SD))
-    a=AdjustGrid[SD] # shortcut
-
-    t=a['Extents']['Extent[0]'][:,0]
-    Nz=a['Extents']['Extent[0]'][:,1]
-    Nphi=a['Extents']['Extent[1]'][:,1]
-    Nr=a['Extents']['Extent[2]'][:,1]
-
-    c1=next(ax._get_lines.prop_cycler)['color']
-    c2=next(ax._get_lines.prop_cycler)['color']
-    c3=next(ax._get_lines.prop_cycler)['color']
-
-    # 'pre':  at time-steps of adjustment, the value reported in
-    #         AdjustGridDiagnostics.h5 is the *old* one.
-    ax.step(t,(Nz-20.)/10,    where='pre', color=c1, label='(Nz-20)/10')
-    ax.step(t,(Nphi-20.)/10,  where='pre', color=c2, label='(Nphi-20)/10')
-    ax.step(t,(Nr-20.)/10,    where='pre', color=c3, label='(Nr-20)/10')
-
-    
-    # Bf0I1, Bf1B2Radial, Bf0I1
-
-    tmp=a['Bf0I1']['TruncationErrorExcess']
-    ax.plot(tmp[:,0],tmp[:,1],'+-',color=c1,label='TruncErrorExcess - z',linewidth=2)
-    tmp=a['Bf1B2']['TruncationErrorExcess']
-    ax.plot(tmp[:,0],tmp[:,1],'+-',color=c2,label='TruncErrorExcess - phi',linewidth=2)
-    tmp=a[radial_topology]['TruncationErrorExcess']
-    ax.plot(tmp[:,0],tmp[:,1],'+-',color=c3,label='TruncErrorExcess - r',linewidth=2)
-    ax.set_xlabel('t/M')
-    ax.legend();
-    ax.set_title(SD)
 
 def PlotSubdomainConstraints(ax, GhCe, N=5, Ngrey=0):
     """
