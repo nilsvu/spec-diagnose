@@ -131,7 +131,7 @@ provide it as recursive dictionary
 
 OPTIONS:
    dataset_matches=[regex] -- only load data-sets matching the regex (e.g. 'Y_l2_m2')
-                               Note:  root-datasets are always loaded
+                              Note:  root-datasets are always loaded
    group_matches=[regex]   -- only traverse groups matching this regex (e.g. 'R0200')
 """
 
@@ -149,26 +149,27 @@ OPTIONS:
             (re.match(dataset_matches,F[k].name)
              or F.parent==F # always keep top-level .dat fields
             ):
-                # remove extension for convenience
-                field=k[:-4]
+                field=k[:-4]  # remove extension from name for convenience
                 data=F[k][()]
-                
-                if not field in D:
-                    D[field]={}
-                
-                i = 0
-                for legend in F[k].attrs['Legend']:
-                    legend=legend.decode("utf-8") 
-                    if legend in D[field]:
-                        D[field][legend]=np.concatenate((D[field][legend], data[:,[0,i]]))
+                if 'Legend' in F[k].attrs:
+                    # a legend was provided for this data-set, split
+                    # the dataset into individual entries, and put
+                    # into a dictionary indexed by legend:
+                    if not field in D:
+                        D[field]={}
+                    for i,legend in enumerate(F[k].attrs['Legend']):
+                        legend=legend.decode("utf-8")
+                        if legend in D[field]:
+                            D[field][legend]=np.concatenate((D[field][legend],
+                                                             data[:,[0,i]]))
+                        else:
+                            D[field][legend]=data[:,[0,i]]
+                else:
+                    # no legend for this data-set.  Load as one big array
+                    if field in D:
+                        D[field]=np.concatenate((D[field], data))
                     else:
-                        D[field][legend]=data[:,[0,i]]
-                    i=i+1
-                
-               # if field in D:
-               #     D[field]=np.concatenate((D[field], data))
-               # else:
-               #     D[field]=data
+                        D[field]=data
             if k.endswith('.dir') and re.match(group_matches,F[k].name):
                 field=k[:-4]
                 if field not in D:
