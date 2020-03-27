@@ -286,3 +286,23 @@ RETURNS
         print("{} -- file found in {} of {} segments".format(filename,
                                                              n_files,len(segments)))
     return D
+
+
+def ImportRun(path_to_ev, Lev, tmin=-1e10, tmax=1e10):
+    """ImportRun
+
+Load some important files for a certain Ev/Lev*, and populate a
+dictionary with the imported data as follows
+"""
+    D={}
+    segs,tstart,termination=FindLatestSegments(path_to_ev,Lev, tmin=tmin, tmax=tmax) 
+    D['segs']=segs
+    D['tstart']=tstart
+    print("tstart={}".format(tstart))
+    D['termination']=termination
+    D['Horizons']   =LoadH5_from_segments(segs,"ApparentHorizons/Horizons.h5")
+    D['AhA']=       LoadDat_from_segments(segs,"ApparentHorizons/AhA.dat")
+    D['AhB']=       LoadDat_from_segments(segs,"ApparentHorizons/AhB.dat")
+    D['AdjustGrid']=LoadH5_from_segments(segs,"AdjustGridExtents.h5")
+    D['GhCeLinf'] = LoadDat_from_segments(segs,"ConstraintNorms/GhCe_Linf.dat")
+    return D
