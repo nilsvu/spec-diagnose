@@ -168,3 +168,38 @@ def PlotAH(ax, AH_dat, NormalizeRadii=True, title=None):
 
     if title is not None:
         ax.set_title(title,fontsize='x-large')
+
+        
+def PlotGraviationalWave(ax, waveform, l, m, label=None, title=None, RIndex=-1):
+    """
+Make a plot of gravitational waves.
+  ax -- axes to plot into
+  run -- run containing the GW data
+  label -- label for legend and axis, e.g. Psi4, h, M*Psi4, h/M
+           Keep current label if option is not provided.
+  l,m -- mode numbers
+  RIndex -- index of wave extraction radius, default: -1 (outermost radius)
+  
+  Example: 
+    PlotGraviationalWave(ax, run['Psi4'], 2, 2, 'Psi4', RIndex=-1)
+"""
+    Ylm_str='Y_l'+format(l)+'_m'+format(m);    
+    Radius=list(waveform)[RIndex]
+    Ylm=waveform[Radius][Ylm_str]
+
+    # plot Re and Im over time
+    keylist=list(Ylm)
+    ReData=Ylm[keylist[1]]
+    ImData=Ylm[keylist[2]]
+    ax.plot(ReData[:,0],ReData[:,1], label='Re '+label+' Y'+format(l)+format(m)+'('+Radius+')')
+    ax.plot(ImData[:,0],ImData[:,1], label='Im '+label+' Y'+format(l)+format(m)+'('+Radius+')')
+    ax.legend()
+    
+   # print(ax.get_ylabel(), 'is not in ylabel', label is not in ax.get_ylabel())
+    
+    if label is not None:
+        ax.set_ylabel(label)
+    ax.set_xlabel('t/M')
+    
+    if title is not None:
+        ax.set_title(title,fontsize='x-large')
