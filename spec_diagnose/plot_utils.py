@@ -1,16 +1,21 @@
 import re
 
-def AnnotateSegments(ax, segs, tstart, termination, y=0.):
+def AnnotateSegments(ax, RunDict, y=0.):
     """
 Annote a plot with information where segments begin.
 
   ax - axes object to add annotations into
-  segs
-  tstart
-  termination -- data returned by segment_utils.FindLatestSegments
+  RunDict - dictionary of data of run.  Created with ImportRun. 
+            must contain 'segs', 'tstart', 'termination', i.e.
+            the data returned by FindLatestSegments
 
   y - lower-bound y-value at which to print the (vertical) text objects
 """
+
+    segs=RunDict['segs']
+    tstart=RunDict['tstart']
+    termination=RunDict['termination']
+
     for seg,t in zip(segs,tstart):
         ax.axvline(t,color='grey',lw=0.5)
         # extract 'LevN_xx' from seg
