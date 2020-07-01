@@ -305,4 +305,5 @@ dictionary with the imported data as follows
     D['AhB']=       LoadDat_from_segments(segs,"ApparentHorizons/AhB.dat")
     D['AdjustGrid']=LoadH5_from_segments(segs,"AdjustGridExtents.h5")
     D['GhCeLinf'] = LoadDat_from_segments(segs,"ConstraintNorms/GhCe_Linf.dat")
+    D['sep']      = LoadDat_from_segments(segs,"ApparentHorizons/HorizonSepMeasures.dat")
     return D
