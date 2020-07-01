@@ -1,22 +1,25 @@
 import re
 
-def AnnotateSegments(ax, RunDict, y=0.):
+def AnnotateSegments(ax, RunDict, y=0., TerminationReason=False):
     """
 Annote a plot with information where segments begin.
 
-  ax - axes object to add annotations into
-  RunDict - dictionary of data of run.  Created with ImportRun. 
+  ax      - axes object to add annotations into
+  RunDict - dictionary of data of run.  Created with ImportRun.
             must contain 'segs', 'tstart', 'termination', i.e.
             the data returned by FindLatestSegments
 
-  y - lower-bound y-value at which to print the (vertical) text objects
+  y       - lower-bound y-value at which to print the (vertical) text objects
+  TerminationReason
+          - if ==True, print the termination reason of all segments which
+            did not end with 'WallClock'
 """
 
     segs=RunDict['segs']
     tstart=RunDict['tstart']
     termination=RunDict['termination']
 
-    for seg,t in zip(segs,tstart):
+    for seg,t,r in zip(segs,tstart,termination):
         ax.axvline(t,color='grey',lw=0.5)
         # extract 'LevN_xx' from seg
         m=re.match('.*/(Lev._..)/Run',seg)
@@ -25,6 +28,8 @@ Annote a plot with information where segments begin.
         else:
             print("WARNING.  segs has unexpected format")
             lev=""
+        if TerminationReason and r not in ['WallClock',]:
+            lev=lev+" "+r
         ax.text(t, y,lev,rotation='vertical',verticalalignment='bottom', clip_on=True)
 
 
