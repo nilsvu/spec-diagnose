@@ -191,7 +191,7 @@ Make a plot of gravitational waves.
   RIndex -- index of wave extraction radius, default: -1 (outermost radius)
 
   Example:
-    PlotGraviationalWave(ax, run['Psi4'], 2, 2, label='Psi4', RIndex=-1)
+    PlotGravitionalWave(ax, run['Psi4'], 2, 2, label='Psi4', RIndex=-1)
 """
     Ylm_str='Y_l'+format(l)+'_m'+format(m);
     Radius=list(waveform)[RIndex]
