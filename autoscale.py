@@ -2,6 +2,10 @@
 #
 # some modifications for empty axes and for log-axes
 #
+
+import matplotlib.pyplot as plt
+import numpy as np
+
 def autoscale(ax=None, axis='y', margin=0.1):
     '''Autoscales the x or y axis of a given matplotlib ax object
     to fit the margins set by manually limits of the other axis,
