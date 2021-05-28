@@ -1,6 +1,12 @@
+"""
+docstring of plot_utils.
+"""
+
+
 import re
 
-def AnnotateSegments(ax, RunDict, y=0., TerminationReason=False):
+def AnnotateSegments(ax, RunDict, y=0., TerminationReason=False,
+                     tref=0.):
     """
 Annote a plot with information where segments begin.
 
@@ -13,6 +19,7 @@ Annote a plot with information where segments begin.
   TerminationReason
           - if ==True, print the termination reason of all segments which
             did not end with 'WallClock'
+  tref    - use t-tref on x-axis (to avoid excessively long numbers)
 """
 
     segs=RunDict['segs']
@@ -20,7 +27,7 @@ Annote a plot with information where segments begin.
     termination=RunDict['termination']
 
     for seg,t,r in zip(segs,tstart,termination):
-        ax.axvline(t,color='grey',lw=0.5)
+        ax.axvline(t-tref,color='grey',lw=0.5)
         # extract 'LevN_xx' from seg
         m=re.match('.*/(Lev._..)/Run',seg)
         if m:
@@ -30,16 +37,17 @@ Annote a plot with information where segments begin.
             lev=""
         if TerminationReason and r not in ['WallClock',]:
             lev=lev+" "+r
-        ax.text(t, y,lev,rotation='vertical',verticalalignment='bottom', clip_on=True)
+        ax.text(t-tref, y,lev,rotation='vertical',verticalalignment='bottom', clip_on=True)
 
 
-def PlotTruncationErrorSubdomain(ax, AdjustGrid, SD, PileUpModes=False):
+def PlotTruncationErrorSubdomain(ax, AdjustGrid, SD, tref=0., PileUpModes=False):
     """
 Plot quantities relevant to assess truncation error for one subdomain.
 
 ax -- axis object into which to plot data
 AdjustGrid -- AdjustGrid dictionary, to be indexed by 'SD'
 SD         -- name of the spherical shell to be plotted
+tref       -- use t-tref as xaxis
 """
 
     a=AdjustGrid[SD] # shortcut
@@ -65,7 +73,7 @@ SD         -- name of the spherical shell to be plotted
         N=a['Extents'][key][:,1]
         # 'pre':  at time-steps of adjustment, the value reported in
         #         AdjustGridDiagnostics.h5 is the *old* one.
-        ax.step(t, (N-20.)/10, where='pre', color=colors[idx],
+        ax.step(t-tref, (N-20.)/10, where='pre', color=colors[idx],
                 linewidth=2.5, label="(N{}-20)/10".format(labels[idx]))
         idx=idx+1
 
@@ -92,14 +100,17 @@ SD         -- name of the spherical shell to be plotted
     # Step 2: plot
     for idx,bf in enumerate(bfs):
         tmp=a[bf]['TruncationErrorExcess']
-        ax.plot(tmp[:,0],tmp[:,1],'--',color=colors[idx],label='TruncErrExcess-{}'.format(labels[idx]),linewidth=1.5)
+        ax.plot(tmp[:,0]-tref,tmp[:,1],'--',color=colors[idx],label='TruncErrExcess-{}'.format(labels[idx]),linewidth=1.5)
         tmp_idx=tmp[:,1]>0
         if sum(tmp_idx)>0:
-            ax.plot(tmp[tmp_idx,0],tmp[tmp_idx,1],'o',color=colors[idx])
+            ax.plot(tmp[tmp_idx,0]-tref,tmp[tmp_idx,1],'o',color=colors[idx])
         if PileUpModes:
             tmp=a[bf]['MinNumberOfPiledUpModes']
-            ax.plot(tmp[:,0],tmp[:,1],':', linewidth=1.5, color=colors[idx], label='# PileUpModes-{}'.format(labels[idx]))
-    ax.set_xlabel('t/M')
+            ax.plot(tmp[:,0]-tref,tmp[:,1],':', linewidth=1.5, color=colors[idx], label='# PileUpModes-{}'.format(labels[idx]))
+    if tref==0:
+        ax.set_xlabel('t/M')
+    else:
+        ax.set_xlabel(f'(t-{tref})/M')
     ax.legend();
     ax.set_title(SD)
     return
