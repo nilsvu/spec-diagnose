@@ -306,4 +306,13 @@ dictionary with the imported data as follows
     D['AdjustGrid']=LoadH5_from_segments(segs,"AdjustGridExtents.h5")
     D['GhCeLinf'] = LoadDat_from_segments(segs,"ConstraintNorms/GhCe_Linf.dat")
     D['sep']      = LoadDat_from_segments(segs,"ApparentHorizons/HorizonSepMeasures.dat")
+    D['DiagAhSpeedA'] = LoadDat_from_segments(segs,"DiagAhSpeedA.dat")
+    D['DiagAhSpeedB'] = LoadDat_from_segments(segs,"DiagAhSpeedB.dat")
+    D['GrAdjustMaxTstepToDampingTimes'] = \
+        LoadDat_from_segments(segs,"GrAdjustMaxTstepToDampingTimes.dat")
+    D['GrAdjustSubChunksToDampingTimes'] = \
+        LoadDat_from_segments(segs,"GrAdjustSubChunksToDampingTimes.dat")
+    D['TStepperDiag'] = LoadDat_from_segments(segs,"TStepperDiag.dat")
+
+    D['ForContinuation'] = LoadDat_from_segments(segs,"ForContinuation/AhC.dat")
     return D
