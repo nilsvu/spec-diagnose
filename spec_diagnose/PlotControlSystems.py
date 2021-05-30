@@ -25,12 +25,12 @@ def autoscale(ax=None, axis='y', margin=0.1):
         if axis == 'y':
             setlim = ax.set_ylim
             lim = ax.get_xlim()
-            scale = ax.get_xscale()
+            scale = ax.get_yscale()
             fixed, dependent = x, y
         else:
             setlim = ax.set_xlim
             lim = ax.get_ylim()
-            scale = ax.get_yscale()
+            scale = ax.get_xscale()
             fixed, dependent = y, x
 
         low, high = calculate_new_limit(fixed, dependent, lim)
@@ -40,13 +40,20 @@ def autoscale(ax=None, axis='y', margin=0.1):
     if newlow==np.inf: 
         return  # no data at all, so don't reset anything
 
-    # print(scale)# this doesn't seem to work, since some axes report
     # lin mapping which should be log
     if scale=='log':  
-        setlim(newlow/(1+margin), newhigh*(1+margin))
+        if newlow==newhigh: # if all datapoints have identical values
+            fac=1+margin
+        else:
+            # compute limits on log-axis to have
+            # linear distance 'margin' on both ends
+            fac=(newhigh/newlow)**margin
+        setlim(newlow/fac, newhigh*fac)
     else:
-        margin = margin*(newhigh - newlow)
-        setlim(newlow-margin, newhigh+margin)
+        delta = margin*(newhigh - newlow)
+        if delta==0: # if all datapoints have identical values
+            delta=margin*newhigh 
+        setlim(newlow-delta, newhigh+delta)
     
 def calculate_new_limit(fixed, dependent, limit):
     '''Calculates the min/max of the dependent axis given 
@@ -55,6 +62,8 @@ def calculate_new_limit(fixed, dependent, limit):
     if len(fixed) > 2:
         mask = (fixed>limit[0]) & (fixed < limit[1])
         window = dependent[mask]
+        if len(window)==0:
+            window=dependent # no data in plot - use all data for range
         low, high = window.min(), window.max()
     else:
         low = dependent[0]
@@ -77,32 +86,32 @@ def get_xy(artist):
     return x, y
 
 
-if __name__ == "__main__":
-    # To test
-    fig, axes = plt.subplots(ncols = 4, figsize=(12,3))
-    (ax1, ax2, ax3, ax4) = axes
+# if __name__ == "__main__":
+#     # To test
+#     fig, axes = plt.subplots(ncols = 4, figsize=(12,3))
+#     (ax1, ax2, ax3, ax4) = axes
 
-    x = np.linspace(0,100,300)
-    noise = np.random.normal(scale=0.1, size=x.shape)
-    y = 2*x + 3 + noise
+#     x = np.linspace(0,100,300)
+#     noise = np.random.normal(scale=0.1, size=x.shape)
+#     y = 2*x + 3 + noise
 
-    for ax in axes:
-        ax.plot(x, y)
-        ax.scatter(x,y, color='red')
-        ax.axhline(50., ls='--', color='green')
-        for ax in axes[1:]:
-            ax.set_xlim(20,21)
-            ax.set_ylim(40,45)
+#     for ax in axes:
+#         ax.plot(x, y)
+#         ax.scatter(x,y, color='red')
+#         ax.axhline(50., ls='--', color='green')
+#         for ax in axes[1:]:
+#             ax.set_xlim(20,21)
+#             ax.set_ylim(40,45)
 
-        autoscale(ax3, 'y', margin=0.1)
-        autoscale(ax4, 'x', margin=0.1)
+#         autoscale(ax3, 'y', margin=0.1)
+#         autoscale(ax4, 'x', margin=0.1)
 
-        ax1.set_title('Raw data')
-        ax2.set_title('Specificed limits')
-        ax3.set_title('Autoscale y')
-        ax4.set_title('Autoscale x')
-        plt.tight_layout()
-        fig.savefig('autoscale.png', dpi=400)
+#         ax1.set_title('Raw data')
+#         ax2.set_title('Specificed limits')
+#         ax3.set_title('Autoscale y')
+#         ax4.set_title('Autoscale x')
+#         plt.tight_layout()
+#         fig.savefig('autoscale.png', dpi=400)
 
 
 ################################################################        
@@ -275,8 +284,8 @@ def PlotControlSystems(D, AH, tref=0., xlim=None):
     
     # common horizon in ForContinuation
     HaveContinuation = ( len(D['ForContinuation'].keys())>0 )
+    axs2[7].set_title("ForContinuation/AhC")
     if HaveContinuation:
-        axs2[7].set_title("ForContinuation/AhC")
         for k in 'L_surface', 'L_mesh', 'L_max':
             d=D['ForContinuation'][k]
             t=d[:,0]-tref
@@ -287,15 +296,12 @@ def PlotControlSystems(D, AH, tref=0., xlim=None):
         axs2[7].legend(fontsize=8)  
         
     # OVERALL COSMETICS
-    for ax in axs0+axs1+axs2[:-1]:  # skip ForContinuation plot, which not always has data
+    #  ForContinuation was already rescaled separately, so exclude here
+    for ax in axs0+axs1+axs2[:-1]:
         ax.legend(fontsize=8)
         ax.set_xlabel(xaxis_label)
-        #print(ax.get_yscale())
         if xlim is not None:
             ax.set_xlim(xlim)
-            try:
-                autoscale.autoscale(ax)
-            except:
-                pass
+            autoscale(ax)
 
 
