@@ -57,7 +57,7 @@ RETURNS
             # take Evolution.input instead
             tmp=os.path.join(seg,'Evolution.input')
             if not os.path.exists(tmp):
-                raise IOError("{}--did not find Evolutiuon.input".format(s))
+                raise IOError("{}--did not find Evolutiuon.input".format(seg))
             p=re.compile("^ *StartTime *= *(.+); *\n")
             for line in open(tmp):
                 m=p.match(line)
@@ -288,31 +288,42 @@ RETURNS
     return D
 
 
-def ImportRun(path_to_ev, Lev, tmin=-1e10, tmax=1e10):
+def ImportRun(path_to_ev, Lev, tmin=-1e10, tmax=1e10,verbose=False):
     """ImportRun
 
 Load some important files for a certain Ev/Lev*, and populate a
 dictionary with the imported data as follows
 """
     D={}
-    segs,tstart,termination=FindLatestSegments(path_to_ev,Lev, tmin=tmin, tmax=tmax) 
+    segs,tstart,termination=FindLatestSegments(path_to_ev,Lev, tmin=tmin, tmax=tmax)
     D['segs']=segs
     D['tstart']=tstart
-    print("tstart={}".format(tstart))
+    if verbose or True:
+        first_seg=segs[0]
+        first_seg=first_seg[first_seg.find('Lev'):]
+        last_seg=segs[-1]
+        last_seg=last_seg[last_seg.find('Lev'):]
+        print(f"Loading {len(segs)} segments {first_seg} @ {tstart[0]:7.3f} ... {last_seg} @ {tstart[-1]:7.3f}")
+        #print("tstart={}".format(tstart))
     D['termination']=termination
-    D['Horizons']   =LoadH5_from_segments(segs,"ApparentHorizons/Horizons.h5")
+
+    if verbose: print("Horizons",end='')
+    D['Horizons']=  LoadH5_from_segments(segs,"ApparentHorizons/Horizons.h5")
     D['AhA']=       LoadDat_from_segments(segs,"ApparentHorizons/AhA.dat")
     D['AhB']=       LoadDat_from_segments(segs,"ApparentHorizons/AhB.dat")
+    D['sep']=       LoadDat_from_segments(segs,"ApparentHorizons/HorizonSepMeasures.dat")
+    D['ForContinuation'] = LoadDat_from_segments(segs,"ForContinuation/AhC.dat")
+    if verbose: print(", GridExtents",end='')
     D['AdjustGrid']=LoadH5_from_segments(segs,"AdjustGridExtents.h5")
+    if verbose: print(", Constraints",end='')
     D['GhCeLinf'] = LoadDat_from_segments(segs,"ConstraintNorms/GhCe_Linf.dat")
-    D['sep']      = LoadDat_from_segments(segs,"ApparentHorizons/HorizonSepMeasures.dat")
+    if verbose: print(", DiagAhSpeeds",end='')
     D['DiagAhSpeedA'] = LoadDat_from_segments(segs,"DiagAhSpeedA.dat")
     D['DiagAhSpeedB'] = LoadDat_from_segments(segs,"DiagAhSpeedB.dat")
+    if verbose: print(", DampingTimes",end='')
     D['GrAdjustMaxTstepToDampingTimes'] = \
         LoadDat_from_segments(segs,"GrAdjustMaxTstepToDampingTimes.dat")
     D['GrAdjustSubChunksToDampingTimes'] = \
         LoadDat_from_segments(segs,"GrAdjustSubChunksToDampingTimes.dat")
     D['TStepperDiag'] = LoadDat_from_segments(segs,"TStepperDiag.dat")
-
-    D['ForContinuation'] = LoadDat_from_segments(segs,"ForContinuation/AhC.dat")
     return D
