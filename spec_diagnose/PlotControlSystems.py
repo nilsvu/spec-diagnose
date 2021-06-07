@@ -65,13 +65,17 @@ def calculate_new_limit(fixed, dependent, limit):
         if len(window)==0:
             window=dependent # no data in plot - use all data for range
         low, high = window.min(), window.max()
-    else:
+    elif len(fixed)>=1:
         low = dependent[0]
         high = dependent[-1]
         if low == 0.0 and high == 1.0:
             # This is a axhline in the autoscale direction
             low = np.inf
             high = -np.inf
+    else:
+        # no data at all, just make up some bounds
+        low=0.
+        high=1.
     return low, high
 
 def get_xy(artist):
@@ -155,7 +159,10 @@ def PlotControlSystems(D, AH, tref=0., xlim=None):
         t=d[:,0]-tref
         for idx,panel in enumerate(Panels0):
             if k in panel:
-                axs0[idx].plot(t,d[:,1], label=k)
+                if k in ['Lambda', 'DtLambda']:
+                    axs0[idx].plot(t,-d[:,1], label="--"+k)
+                else:
+                    axs0[idx].plot(t,d[:,1], label=k)
                 found=True
                 if idx==0 and k=='Q':
                     axs0[idx].plot(t,d[:,1],'o')
@@ -221,7 +228,7 @@ def PlotControlSystems(D, AH, tref=0., xlim=None):
             d=D['GrAdjustSubChunksToDampingTimes'][k]
             t=d[:,0]-tref
             axs2[idx].plot(t,d[:,1],label=k)
-        #axs2[1].set_yscale('log')
+    axs2[1].set_yscale('log')
     axs2[2].set_yscale('log')
     axs2[3].set_yscale('log')
 
@@ -236,12 +243,12 @@ def PlotControlSystems(D, AH, tref=0., xlim=None):
         d=D['AdjustGrid'][k]['Extents']['Extent[0]']
         t=d[:,0]-tref
         axs2[4].plot(t,d[:,1]/10, color=c,
-                     label=k+" Nr/10")
+                     label="Nr/10")
         
         d=D['AdjustGrid'][k]['Bf0I1']['TruncationErrorExcess']
         t=d[:,0]-tref
         axs2[4].plot(t,d[:,1], '--', color=c,
-                     label=k+" TruncErrExcess-r")
+                     label="TruncErrExcess-r")
         idx=d[:,1]>0
         axs2[4].plot(t[idx],d[idx,1], 'o', color=c)
         
@@ -251,12 +258,12 @@ def PlotControlSystems(D, AH, tref=0., xlim=None):
         d=D['AdjustGrid'][k]['Extents']['Extent[1]']
         t=d[:,0]-tref
         axs2[4].plot(t,d[:,1]/10, color=c,
-                     label=k+" Ntheta/10")
+                     label="Ntheta/10")
         
         d=D['AdjustGrid'][k]['Bf1S2']['TruncationErrorExcess']
         t=d[:,0]-tref
         axs2[4].plot(t,d[:,1], '--',
-                     color=c, label=k+" TruncErrExcess-theta")
+                     color=c, label="TruncErrExcess-theta")
         idx=d[:,1]>0
         axs2[4].plot(t[idx],d[idx,1], 'o', color=c)
 
@@ -294,6 +301,7 @@ def PlotControlSystems(D, AH, tref=0., xlim=None):
         plot_utils.AnnotateSegments(axs2[7], D, y=30, TerminationReason=True, tref=tref)
         axs2[7].set_xlim(tmp)
         axs2[7].legend(fontsize=8)  
+        axs2[7].set_xlabel(xaxis_label)
         
     # OVERALL COSMETICS
     #  ForContinuation was already rescaled separately, so exclude here
