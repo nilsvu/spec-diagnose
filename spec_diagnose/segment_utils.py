@@ -184,8 +184,8 @@ OPTIONS:
 
     D={}
     n_files=0
-    if verbose: print(filename,end="")
-    for seg in tqdm(segments, disable=not verbose):
+    desc=filename.split('/')[-1]
+    for seg in tqdm(segments, disable=not verbose, desc=f"{desc:15}"):
         #print(".",end="")
         f=os.path.join(seg,filename)
         if os.path.exists(f):
@@ -195,8 +195,8 @@ OPTIONS:
                            group_matches=group_matches)
             F.close()
             n_files=n_files+1
-    if verbose and n_files < len(segments):
-        print(f"file is not present in {len(segments)-n_files} segments")
+    #if verbose and n_files < len(segments):
+    #    print(f"file is not present in {len(segments)-n_files} segments")
     return D
 
 
@@ -212,8 +212,8 @@ same number of columns
     """
     out=None
     n_files=0
-    if verbose: print(filename,end="")
-    for seg in tqdm(segments, disable=not verbose):
+    desc=filename.split('/')[-1]
+    for seg in tqdm(segments, disable=not verbose, desc=f"{desc:15}"):
         f=os.path.join(seg,filename)
         if os.path.exists(f):
             tmp=np.loadtxt(f)
@@ -223,8 +223,8 @@ same number of columns
                 else:
                     out=np.concatenate((out,tmp))
             n_files+=1
-    if verbose and n_files < len(segments):
-        print(f"file is not present in {len(segments)-n_files} segments")
+    #if verbose and n_files < len(segments):
+    #    print(f"file is not present in {len(segments)-n_files} segments")
     return out
 
 
@@ -277,8 +277,8 @@ RETURNS
     D={}
 
     n_files=0
-    if verbose: print(filename,end="")
-    for seg in tqdm(segments,disable=not verbose):
+    desc=filename.split('/')[-1]
+    for seg in tqdm(segments,disable=not verbose, desc=f"{desc:15}"):
         f=os.path.join(seg,filename)
         if os.path.exists(f):
             tmp=LoadDat_with_legend(f)
@@ -288,8 +288,8 @@ RETURNS
                 else:
                     D[legend]=data
             n_files+=1
-    if verbose and n_files < len(segments):
-        print(f"file is not present in {len(segments)-n_files} segments")
+    #if verbose and n_files < len(segments):
+    #    print(f"file is not present in {len(segments)-n_files} segments")
     return D
 
 
@@ -326,8 +326,8 @@ dictionary with the imported data.
         D['Horizons']=  LoadH5_from_segments(segs,"ApparentHorizons/Horizons.h5", verbose=verbosity>=2)
         D['AhA']=       LoadDat_from_segments(segs,"ApparentHorizons/AhA.dat", verbose=verbosity>=2)
         D['AhB']=       LoadDat_from_segments(segs,"ApparentHorizons/AhB.dat", verbose=verbosity>=2)
-        D['sep']=       LoadDat_from_segments(segs,"ApparentHorizons/HorizonSepMeasures.dat", verbose=verbosity>=2)
         D['ForContinuation'] = LoadDat_from_segments(segs,"ForContinuation/AhC.dat", verbose=verbosity>=2)
+        D['sep']=       LoadDat_from_segments(segs,"ApparentHorizons/HorizonSepMeasures.dat", verbose=verbosity>=2)
     if diagnostics:
         if verbosity==1: print(", Constraints",end='')
         D['GhCeLinf'] = LoadDat_from_segments(segs,"ConstraintNorms/GhCe_Linf.dat", verbose=verbosity>=2)
