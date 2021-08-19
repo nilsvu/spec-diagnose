@@ -5,12 +5,13 @@ import re
 import h5py
 import numpy as np
 
+from tqdm import tqdm
 
 def FindLatestSegments(EvDir, Lev, tmin=-1e10, tmax=1e10, WithRingdown=True):
     """
 Search through a usual SpEC segment structure, to find all
-segments with start-time tmin < tastart < tmax.  Negative 
-tmin count from the end of the run, e.g. use tmin=-20 to 
+segments with start-time tmin < tastart < tmax.  Negative
+tmin count from the end of the run, e.g. use tmin=-20 to
 find the very last few segments.
 
 if WithRingdown==False, exclude ringdown segments
@@ -158,7 +159,9 @@ OPTIONS:
                     if not field in D:
                         D[field]={}
                     for i,legend in enumerate(F[k].attrs['Legend']):
-                        legend=legend.decode("utf-8")
+                        # decode if not already a plain python str
+                        if not type(legend)==type(str("abc")):
+                            legend=legend.decode("utf-8")
                         if legend in D[field]:
                             D[field][legend]=np.concatenate((D[field][legend],
                                                              data[:,[0,i]]))
@@ -181,7 +184,9 @@ OPTIONS:
 
     D={}
     n_files=0
-    for seg in segments:
+    if verbose: print(filename,end="")
+    for seg in tqdm(segments, disable=not verbose):
+        #print(".",end="")
         f=os.path.join(seg,filename)
         if os.path.exists(f):
             F=h5py.File(f,'r')
@@ -190,14 +195,13 @@ OPTIONS:
                            group_matches=group_matches)
             F.close()
             n_files=n_files+1
-    if verbose:
-        print("{} -- file found in {} of {} segments".format(filename,
-                                                             n_files,len(segments)))
+    if verbose and n_files < len(segments):
+        print(f"file is not present in {len(segments)-n_files} segments")
     return D
 
 
 
-def LoadDat_from_segments_simple(segments, filename):
+def LoadDat_from_segments_simple(segments, filename, verbose=False):
     """
 Given a list of segments (incl. '/Run' directories),
 check each one for a file 'filename', load that dat file, concatenate data, and
@@ -208,7 +212,8 @@ same number of columns
     """
     out=None
     n_files=0
-    for seg in segments:
+    if verbose: print(filename,end="")
+    for seg in tqdm(segments, disable=not verbose):
         f=os.path.join(seg,filename)
         if os.path.exists(f):
             tmp=np.loadtxt(f)
@@ -218,8 +223,8 @@ same number of columns
                 else:
                     out=np.concatenate((out,tmp))
             n_files+=1
-    print("{} -- file found in {} of {} segments".format(filename,
-                                                         n_files,len(segments)))
+    if verbose and n_files < len(segments):
+        print(f"file is not present in {len(segments)-n_files} segments")
     return out
 
 
@@ -227,7 +232,8 @@ def LoadDat_with_legend(F):
     """
 Load a .dat file with standard SpEC legend strings.
 Results will be placed into a dictionary indexed by the
-legend string.
+legend string.  This allows to import files where the columns
+change between segments.
 
 F -- filename
 
@@ -247,7 +253,7 @@ RETURNS
             keys[ int( m.group(1) )]  = m.group(2).strip()
     #print(keys)
     tmp=np.loadtxt(F,
-                   ndmin=2 # so it always returns a 2-d array
+                   ndmin=2 # always return a 2-d array
                   )
     #print(tmp.shape)
     D={}
@@ -257,22 +263,22 @@ RETURNS
 
 
 def LoadDat_from_segments(segments, filename, verbose=False):
-    """
-Given a list of segments (incl. '/Run' directories),
-check each one for a file 'filename', load that dat file, concatenate data, and
-provide as np.array
-
-The data is returned as a dictionary with 2-column data-sets, one each for each column,
-named by the legend's inside the .dat files.  This allows for .dat files with a changing
-number of columns, like GhCe_Linf.dat
+    """Given a list of segments (incl. '/Run' directories), check each
+one for a file 'filename', and load the data from it.  Concatenates
+data from different segments, and returns a a dictionary with 2-column
+data-sets, one each for each column, named by the legend's inside the
+.dat files.  This allows for .dat files with a changing number of
+columns, like GhCe_Linf.dat
 
 RETURNS
   D -- dictionary
-"""
+
+    """
     D={}
 
     n_files=0
-    for seg in segments:
+    if verbose: print(filename,end="")
+    for seg in tqdm(segments,disable=not verbose):
         f=os.path.join(seg,filename)
         if os.path.exists(f):
             tmp=LoadDat_with_legend(f)
@@ -282,48 +288,59 @@ RETURNS
                 else:
                     D[legend]=data
             n_files+=1
-    if verbose:
-        print("{} -- file found in {} of {} segments".format(filename,
-                                                             n_files,len(segments)))
+    if verbose and n_files < len(segments):
+        print(f"file is not present in {len(segments)-n_files} segments")
     return D
 
 
-def ImportRun(path_to_ev, Lev, tmin=-1e10, tmax=1e10,verbose=False):
+def ImportRun(path_to_ev, Lev, tmin=-1e10, tmax=1e10,verbosity=0,
+              horizons=True, diagnostics=True, GridExtents=True):
     """ImportRun
 
 Load some important files for a certain Ev/Lev*, and populate a
-dictionary with the imported data as follows
+dictionary with the imported data.
+  path_to_ev -- Ev/ directory from which to import data
+  Lev [int]  -- Integer Lev
+  tmin/tmax  -- load only segments overlapping this time-range.
+                Negative tmin counts from the end of the run, e.g.
+                tmin=-100 is good for debugging crashes
+  verbosity  -- 0=nearly silent,  1=a few lines of status updates 2=progress bars
+  horizons   -- if True, load Horizons.h5, Ah{A,B,C}.dat, HorizonSepMeasures.dat
+  diagnostics-- if True, load GhCe_Linf.dat, DiagAhSpeed{A,B].dat, GrAdjustMaxTstepToDampingTimes.dat, GrAdjustSubChunksToDampingTimes.dat, TStepperDiag.dat
+  GridEtxents-- if True, load AdjustGridExtents.h5
 """
     D={}
     segs,tstart,termination=FindLatestSegments(path_to_ev,Lev, tmin=tmin, tmax=tmax)
     D['segs']=segs
     D['tstart']=tstart
-    if verbose or True:
+    if verbosity>=1:
         first_seg=segs[0]
         first_seg=first_seg[first_seg.find('Lev'):]
         last_seg=segs[-1]
         last_seg=last_seg[last_seg.find('Lev'):]
         print(f"Loading {len(segs)} segments {first_seg} @ {tstart[0]:7.3f} ... {last_seg} @ {tstart[-1]:7.3f}")
-        #print("tstart={}".format(tstart))
     D['termination']=termination
 
-    if verbose: print("Horizons",end='')
-    D['Horizons']=  LoadH5_from_segments(segs,"ApparentHorizons/Horizons.h5")
-    D['AhA']=       LoadDat_from_segments(segs,"ApparentHorizons/AhA.dat")
-    D['AhB']=       LoadDat_from_segments(segs,"ApparentHorizons/AhB.dat")
-    D['sep']=       LoadDat_from_segments(segs,"ApparentHorizons/HorizonSepMeasures.dat")
-    D['ForContinuation'] = LoadDat_from_segments(segs,"ForContinuation/AhC.dat")
-    if verbose: print(", GridExtents",end='')
-    D['AdjustGrid']=LoadH5_from_segments(segs,"AdjustGridExtents.h5")
-    if verbose: print(", Constraints",end='')
-    D['GhCeLinf'] = LoadDat_from_segments(segs,"ConstraintNorms/GhCe_Linf.dat")
-    if verbose: print(", DiagAhSpeeds",end='')
-    D['DiagAhSpeedA'] = LoadDat_from_segments(segs,"DiagAhSpeedA.dat")
-    D['DiagAhSpeedB'] = LoadDat_from_segments(segs,"DiagAhSpeedB.dat")
-    if verbose: print(", DampingTimes",end='')
-    D['GrAdjustMaxTstepToDampingTimes'] = \
-        LoadDat_from_segments(segs,"GrAdjustMaxTstepToDampingTimes.dat")
-    D['GrAdjustSubChunksToDampingTimes'] = \
-        LoadDat_from_segments(segs,"GrAdjustSubChunksToDampingTimes.dat")
-    D['TStepperDiag'] = LoadDat_from_segments(segs,"TStepperDiag.dat")
+    if horizons:
+        if verbosity==1: print("Horizons",end='')
+        D['Horizons']=  LoadH5_from_segments(segs,"ApparentHorizons/Horizons.h5", verbose=verbosity>=2)
+        D['AhA']=       LoadDat_from_segments(segs,"ApparentHorizons/AhA.dat", verbose=verbosity>=2)
+        D['AhB']=       LoadDat_from_segments(segs,"ApparentHorizons/AhB.dat", verbose=verbosity>=2)
+        D['sep']=       LoadDat_from_segments(segs,"ApparentHorizons/HorizonSepMeasures.dat", verbose=verbosity>=2)
+        D['ForContinuation'] = LoadDat_from_segments(segs,"ForContinuation/AhC.dat", verbose=verbosity>=2)
+    if diagnostics:
+        if verbosity==1: print(", Constraints",end='')
+        D['GhCeLinf'] = LoadDat_from_segments(segs,"ConstraintNorms/GhCe_Linf.dat", verbose=verbosity>=2)
+        if verbosity==1: print(", DiagAhSpeeds",end='')
+        D['DiagAhSpeedA'] = LoadDat_from_segments(segs,"DiagAhSpeedA.dat", verbose=verbosity>=2)
+        D['DiagAhSpeedB'] = LoadDat_from_segments(segs,"DiagAhSpeedB.dat", verbose=verbosity>=2)
+        if verbosity==1: print(", DampingTimes",end='')
+        D['GrAdjustMaxTstepToDampingTimes'] = \
+            LoadDat_from_segments(segs,"GrAdjustMaxTstepToDampingTimes.dat", verbose=verbosity>=2)
+        D['GrAdjustSubChunksToDampingTimes'] = \
+            LoadDat_from_segments(segs,"GrAdjustSubChunksToDampingTimes.dat", verbose=verbosity>=2)
+        D['TStepperDiag'] = LoadDat_from_segments(segs,"TStepperDiag.dat", verbose=verbosity>=2)
+    if GridExtents:
+        if verbosity==1: print(", GridExtents",end='')
+        D['AdjustGrid']=LoadH5_from_segments(segs,"AdjustGridExtents.h5", verbose=verbosity>=2)
     return D
