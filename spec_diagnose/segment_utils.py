@@ -318,7 +318,7 @@ dictionary with the imported data.
         first_seg=first_seg[first_seg.find('Lev'):]
         last_seg=segs[-1]
         last_seg=last_seg[last_seg.find('Lev'):]
-        print(f"Loading {len(segs)} segments {first_seg} @ {tstart[0]:7.3f} ... {last_seg} @ {tstart[-1]:7.3f}")
+        print(f"Loading {len(segs)} segments {first_seg} @ {tstart[0]:7.3f} ... {last_seg} @ {tstart[-1]:7.3f}", flush=True)
     D['termination']=termination
 
     if horizons:
@@ -343,4 +343,5 @@ dictionary with the imported data.
     if GridExtents:
         if verbosity==1: print(", GridExtents",end='')
         D['AdjustGrid']=LoadH5_from_segments(segs,"AdjustGridExtents.h5", verbose=verbosity>=2)
+    if verbosity==1: print("", flush=True)
     return D
