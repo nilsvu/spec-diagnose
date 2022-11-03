@@ -294,7 +294,8 @@ RETURNS
 
 
 def ImportRun(path_to_ev, Lev, tmin=-1e10, tmax=1e10,verbosity=0,
-              horizons=True, diagnostics=True, GridExtents=True):
+              horizons=True, diagnostics=True, GridExtents=True,
+              h22Finite=False):
     """ImportRun
 
 Load some important files for a certain Ev/Lev*, and populate a
@@ -307,8 +308,8 @@ dictionary with the imported data.
   verbosity  -- 0=nearly silent,  1=a few lines of status updates 2=progress bars
   horizons   -- if True, load Horizons.h5, Ah{A,B,C}.dat, HorizonSepMeasures.dat
   diagnostics-- if True, load GhCe_Linf.dat, DiagAhSpeed{A,B].dat, GrAdjustMaxTstepToDampingTimes.dat, GrAdjustSubChunksToDampingTimes.dat, TStepperDiag.dat
-  GridEtxents-- if True, load AdjustGridExtents.h5
-"""
+  GridExtents-- if True, load AdjustGridExtents.h5
+  h22Finite  -- if True, load the (2,2) mode of GW2/rh_FiniteRadii_CodeUnits.h5"""
     D={}
     segs,tstart,termination=FindLatestSegments(path_to_ev,Lev, tmin=tmin, tmax=tmax)
     D['segs']=segs
@@ -340,8 +341,14 @@ dictionary with the imported data.
         D['GrAdjustSubChunksToDampingTimes'] = \
             LoadDat_from_segments(segs,"GrAdjustSubChunksToDampingTimes.dat", verbose=verbosity>=2)
         D['TStepperDiag'] = LoadDat_from_segments(segs,"TStepperDiag.dat", verbose=verbosity>=2)
+        D['TimeInfo'] = LoadDat_from_segments(segs,"TimeInfo.dat", verbose=verbosity>=2)
     if GridExtents:
         if verbosity==1: print(", GridExtents",end='')
         D['AdjustGrid']=LoadH5_from_segments(segs,"AdjustGridExtents.h5", verbose=verbosity>=2)
+    if h22Finite:
+        if verbosity==1: print(", h22Finite", end='')
+        D['h22finite']=LoadH5_from_segments(segs, "GW2/rh_FiniteRadii_CodeUnits.h5",
+            dataset_matches='.*Y_l2_m2.dat',
+            verbose=verbosity>=2)
     if verbosity==1: print("", flush=True)
     return D
