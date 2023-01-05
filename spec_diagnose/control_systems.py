@@ -119,7 +119,7 @@ def get_xy(artist):
 
 
 ################################################################
-def PlotControlSystems(D, AH, tref=0., xlim=None):
+def PlotControlSystems(D, AH, tref=0., xlim=None, PrintTerminationReason=False):
     """
     Plots various diagnostics to diagnose IncomingCharFields errors.
     D -- dictionary returned form segment_utils.ImportRun()
@@ -274,7 +274,8 @@ def PlotControlSystems(D, AH, tref=0., xlim=None):
             t=d[:,0]-tref
             axs2[7].plot(t,d[:,1],label=k)
         tmp=axs2[7].get_xlim()
-        plot_utils.AnnotateSegments(axs2[7], D, y=30, TerminationReason=True, tref=tref)
+        plot_utils.AnnotateSegments(axs2[7], D, TerminationReason=True, tref=tref,
+                                    font_size=10)
         axs2[7].set_xlim(tmp)
         axs2[7].legend(fontsize=8)
         axs2[7].set_xlabel(xaxis_label)
@@ -292,3 +293,7 @@ def PlotControlSystems(D, AH, tref=0., xlim=None):
             #    pass
             autoscale(ax)
 
+    # AnnotateSegments after autoscale for nice placement
+    plot_utils.AnnotateSegments(axs2[5], D,
+                                TerminationReason=PrintTerminationReason,
+                                tref=tref, font_size=10)
