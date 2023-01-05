@@ -5,8 +5,8 @@ docstring of plot_utils.
 
 import re
 
-def AnnotateSegments(ax, RunDict, y=0., TerminationReason=False,
-                     tref=0.):
+def AnnotateSegments(ax, RunDict, y=None, TerminationReason=False,
+                     tref=0., font_size=None):
     """
 Annote a plot with information where segments begin.
 
@@ -16,6 +16,7 @@ Annote a plot with information where segments begin.
             the data returned by FindLatestSegments
 
   y       - lower-bound y-value at which to print the (vertical) text objects
+            if ==None, then start 5% above bottom edge of frame
   TerminationReason
           - if ==True, print the termination reason of all segments which
             did not end with 'WallClock'
@@ -26,6 +27,9 @@ Annote a plot with information where segments begin.
     tstart=RunDict['tstart']
     termination=RunDict['termination']
 
+    if y is None:
+        ylim=ax.get_ylim()
+        y = ylim[0] + 0.05*(ylim[1]-ylim[0])
     for seg,t,r in zip(segs,tstart,termination):
         ax.axvline(t-tref,color='grey',lw=0.5)
         # extract 'LevN_xx' from seg
@@ -37,7 +41,9 @@ Annote a plot with information where segments begin.
             lev=""
         if TerminationReason and r not in ['WallClock',]:
             lev=lev+" "+r
-        ax.text(t-tref, y,lev,rotation='vertical',verticalalignment='bottom', clip_on=True)
+        ax.text(t-tref, y,lev,
+                size=font_size,
+                rotation='vertical',verticalalignment='bottom', clip_on=True)
 
 
 def PlotTruncationErrorSubdomain(ax, AdjustGrid, SD, tref=0., PileUpModes=False):
