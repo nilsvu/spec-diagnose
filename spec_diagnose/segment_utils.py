@@ -307,7 +307,9 @@ dictionary with the imported data.
                 tmin=-100 is good for debugging crashes
   verbosity  -- 0=nearly silent,  1=a few lines of status updates 2=progress bars
   horizons   -- if True, load Horizons.h5, Ah{A,B,C}.dat, HorizonSepMeasures.dat
-  diagnostics-- if True, load GhCe_Linf.dat, DiagAhSpeed{A,B].dat, GrAdjustMaxTstepToDampingTimes.dat, GrAdjustSubChunksToDampingTimes.dat, TStepperDiag.dat
+  diagnostics-- if True, load GhCe_Linf.dat, DiagAhSpeed{A,B,C}.dat,
+                              GrAdjustMaxTstepToDampingTimes.dat,
+                              GrAdjustSubChunksToDampingTimes.dat, TStepperDiag.dat
   GridExtents-- if True, load AdjustGridExtents.h5
   h22Finite  -- if True, load the (2,2) mode of GW2/rh_FiniteRadii_CodeUnits.h5"""
     D={}
@@ -327,6 +329,7 @@ dictionary with the imported data.
         D['Horizons']=  LoadH5_from_segments(segs,"ApparentHorizons/Horizons.h5", verbose=verbosity>=2)
         D['AhA']=       LoadDat_from_segments(segs,"ApparentHorizons/AhA.dat", verbose=verbosity>=2)
         D['AhB']=       LoadDat_from_segments(segs,"ApparentHorizons/AhB.dat", verbose=verbosity>=2)
+        D['AhC']=       LoadDat_from_segments(segs,"ApparentHorizons/AhC.dat", verbose=verbosity>=2)
         D['ForContinuation'] = LoadDat_from_segments(segs,"ForContinuation/AhC.dat", verbose=verbosity>=2)
         D['sep']=       LoadDat_from_segments(segs,"ApparentHorizons/HorizonSepMeasures.dat", verbose=verbosity>=2)
     if diagnostics:
@@ -335,6 +338,7 @@ dictionary with the imported data.
         if verbosity==1: print(", DiagAhSpeeds",end='')
         D['DiagAhSpeedA'] = LoadDat_from_segments(segs,"DiagAhSpeedA.dat", verbose=verbosity>=2)
         D['DiagAhSpeedB'] = LoadDat_from_segments(segs,"DiagAhSpeedB.dat", verbose=verbosity>=2)
+        D['DiagAhSpeedC'] = LoadDat_from_segments(segs,"DiagAhSpeedC.dat", verbose=verbosity>=2)
         if verbosity==1: print(", DampingTimes",end='')
         D['GrAdjustMaxTstepToDampingTimes'] = \
             LoadDat_from_segments(segs,"GrAdjustMaxTstepToDampingTimes.dat", verbose=verbosity>=2)
