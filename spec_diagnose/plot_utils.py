@@ -117,7 +117,7 @@ tref       -- use t-tref as xaxis
         ax.set_xlabel('t/M')
     else:
         ax.set_xlabel(f'(t-{tref})/M')
-    ax.legend();
+    ax.legend(fontsize='xx-small');
     ax.set_title(SD)
     return
 
@@ -149,7 +149,7 @@ Make a plot of constraints.
         ax.plot(data[:,0],data[:,1],color='grey', lw=0.5)
 
     ax.set_xlabel('t/M')
-    ax.legend()
+    ax.legend(fontsize='xx-small')
     ax.set_yscale('log')
 
 
@@ -191,7 +191,7 @@ def PlotAH(ax, AH_dat, NormalizeRadii=True, title=None):
     ax.plot(d[:,0],d[:,1]/10, 'k--', lw=0.5, label='convg reason/10')
 
     ax.set_xlabel('t/M')
-    ax.legend();
+    ax.legend(fontsize='xx-small');
 
     if title is not None:
         ax.set_title(title,fontsize='x-large')
@@ -222,7 +222,7 @@ Make a plot of gravitational waves.
     if label is not None:
         ax.plot(ReData[:,0],ReData[:,1], label='Re '+label+' Y'+format(l)+format(m)+'('+Radius+')')
         ax.plot(ImData[:,0],ImData[:,1], label='Im '+label+' Y'+format(l)+format(m)+'('+Radius+')')
-        ax.legend()
+        ax.legend(fontsize='x-small')
         ax.set_ylabel(label)
 
     ax.set_xlabel('t/M')
