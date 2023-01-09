@@ -229,13 +229,15 @@ def PlotControlSystems(D, AH, tref=0., xlim=None, PrintTerminationReason=False):
             d=D['GrAdjustSubChunksToDampingTimes'][k]
             t=d[:,0]-tref
             axs2[idx].plot(t,d[:,1],label=k)
-        #axs2[1].set_yscale('log')
+    axs2[1].set_yscale('log')
     axs2[2].set_yscale('log')
     axs2[3].set_yscale('log')
 
 
     # AdjustGridExtents
-    for k in 'Sphere'+AH+'0', 'Sphere'+AH+'1', 'Sphere'+AH+'2':
+    sphere=AH
+    if AH=='C': sphere='D' # innermost spheres in ringdown are SphereD*
+    for k in 'Sphere'+sphere+'0', 'Sphere'+sphere+'1', 'Sphere'+sphere+'2':
         if k in D['AdjustGrid']:
             d=D['AdjustGrid'][k]['Extents']['Extent[0]']
             t=d[:,0]-tref
