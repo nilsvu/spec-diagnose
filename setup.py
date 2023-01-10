@@ -9,10 +9,10 @@ setup(
     author="SXS collaboration",
     url="https://black-holes.org",
     packages=['spec_diagnose'],
+    install_requires=['h5py', 'matplotlib', 'numpy', 'tqdm'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    # install_requires=['numpy',...']   <-- Leo recommends adding all dependencies here
 )
