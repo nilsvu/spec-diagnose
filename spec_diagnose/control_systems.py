@@ -167,6 +167,10 @@ def PlotControlSystems(D, AH, tref=0., xlim=None, PrintTerminationReason=False):
                 found=True
                 if idx==0 and k=='Q':
                     axs0[idx].plot(t,d[:,1],'o')
+            if 'ActivationState' in panel:
+                # this panel plots an activaton state,
+                # so, add explanation of it
+                axs0[idx].set_title("1=2CharSpeedTarget 2=VelocityTarget 3=Velocity+drift", fontsize='x-small')
 
         if not found: # plot in first panel
             axs0[0].plot(t,d[:,1], label=k)
