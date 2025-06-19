@@ -2,7 +2,8 @@
 docstring of plot_utils.
 """
 
-
+import matplotlib.pyplot as plt
+from itertools import cycle
 import re
 
 def AnnotateSegments(ax, RunDict, y=None, TerminationReason=False,
@@ -59,9 +60,13 @@ tref       -- use t-tref as xaxis
     a=AdjustGrid[SD] # shortcut
 
     # ==== get colors ====
-    colors=[next(ax._get_lines.prop_cycler)['color'],
-            next(ax._get_lines.prop_cycler)['color'],
-            next(ax._get_lines.prop_cycler)['color']]
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    color_cycler = cycle(colors)
+    for _ in range(len(ax.get_lines())):
+        next(color_cycler)
+    colors=[next(color_cycler),
+            next(color_cycler),
+            next(color_cycler)]
 
     # ==== construct labels ====
     labels=['0','1','2']
@@ -169,9 +174,14 @@ def PlotAH(ax, AH_dat, NormalizeRadii=True, title=None):
         norm=1.
         label_postfix=''
 
+    # Initialize color cycle
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    color_cycler = cycle(colors)
+    for _ in range(len(ax.get_lines())):
+        next(color_cycler)
     for q in 'min', 'max':
         # get a color for both curves
-        color=next(ax._get_lines.prop_cycler)['color']
+        color=next(color_cycler)
         tmp=q+'(r)'
         d=AH_dat[tmp]
         ax.plot(d[:,0],d[:,1]/norm,color=color, label=tmp+label_postfix)
@@ -181,10 +191,10 @@ def PlotAH(ax, AH_dat, NormalizeRadii=True, title=None):
 
     # plot remaining quantities
     d=AH_dat['sqrt(Area/16pi)']
-    ax.plot(d[:,0],d[:,1],label='Mirr')
+    ax.plot(d[:,0],d[:,1],label='Mirr', color = next(color_cycler))
 
     d=AH_dat['L_surface']
-    ax.plot(d[:,0],d[:,1]/10, label='L_surface/10')
+    ax.plot(d[:,0],d[:,1]/10, label='L_surface/10',color = next(color_cycler))
     d=AH_dat['NumIterations']
     ax.plot(d[:,0],d[:,1]/10, lw=0.5, color='grey', label='Niterations/10')
     d=AH_dat['convg reason']
