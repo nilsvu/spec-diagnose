@@ -59,9 +59,10 @@ tref       -- use t-tref as xaxis
     a=AdjustGrid[SD] # shortcut
 
     # ==== get colors ====
-    colors=[next(ax._get_lines.prop_cycler)['color'],
-            next(ax._get_lines.prop_cycler)['color'],
-            next(ax._get_lines.prop_cycler)['color']]
+    colors = ['r', 'b', 'k']
+    #    colors=[next(ax._get_lines.prop_cycler)['color'],
+#            next(ax._get_lines.prop_cycler)['color'],
+#            next(ax._get_lines.prop_cycler)['color']]
 
     # ==== construct labels ====
     labels=['0','1','2']
@@ -171,13 +172,15 @@ def PlotAH(ax, AH_dat, NormalizeRadii=True, title=None):
 
     for q in 'min', 'max':
         # get a color for both curves
-        color=next(ax._get_lines.prop_cycler)['color']
+        #color=next(ax._get_lines.prop_cycler)['color']
         tmp=q+'(r)'
         d=AH_dat[tmp]
-        ax.plot(d[:,0],d[:,1]/norm,color=color, label=tmp+label_postfix)
+        ax.plot(d[:,0],d[:,1]/norm,#color=color,
+                label=tmp+label_postfix)
         tmp=q+'(|r^i-c^i|)'
         d=AH_dat[tmp]
-        ax.plot(d[:,0],d[:,1]/norm, '--', color=color, label=tmp+label_postfix)
+        ax.plot(d[:,0],d[:,1]/norm, '--', #color=color,
+                label=tmp+label_postfix)
 
     # plot remaining quantities
     d=AH_dat['sqrt(Area/16pi)']

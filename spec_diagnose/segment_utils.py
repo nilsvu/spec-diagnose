@@ -1,3 +1,10 @@
+"""Analyse segments of an ongoing SpEC evolution, and import data from
+them.  Most important function:
+
+Lev3=ImportRun('/path/to/Ev/', 3, [more options])
+"""
+
+
 import os
 import sys
 import glob
