@@ -252,7 +252,7 @@ RETURNS
 
     # parse legend portion of file, construct legend as dictionary 'keys'
     keys={}   # dictonary of keys:  int -> legend string
-    p=re.compile("^# *\[([0-9]+)\] * = *(.+)\n")
+    p=re.compile(r"^# *\[([0-9]+)\] * = *(.+)\n")
     for line in open(F):
         m=p.match(line)
         if m is not None:
