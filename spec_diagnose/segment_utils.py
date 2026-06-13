@@ -302,7 +302,8 @@ RETURNS
 
 def ImportRun(path_to_ev, Lev, tmin=-1e10, tmax=1e10,verbosity=0,
               horizons=True, diagnostics=True, GridExtents=True,
-              h22Finite=False):
+              h22Finite=False,
+              extraH5Files=None):
     """ImportRun
 
 Load some important files for a certain Ev/Lev*, and populate a
@@ -318,7 +319,10 @@ dictionary with the imported data.
                               GrAdjustMaxTstepToDampingTimes.dat,
                               GrAdjustSubChunksToDampingTimes.dat, TStepperDiag.dat
   GridExtents-- if True, load AdjustGridExtents.h5
-  h22Finite  -- if True, load the (2,2) mode of GW2/rh_FiniteRadii_CodeUnits.h5"""
+  h22Finite  -- if True, load the (2,2) mode of GW2/rh_FiniteRadii_CodeUnits.h5
+  extraH5Files -- map(output,filename) of extra h5-files to load
+                  e.g. {'Fluxes': 'ApparentHorizon/HorizonFluxes.h5'}
+"""
     D={}
     segs,tstart,termination=FindLatestSegments(path_to_ev,Lev, tmin=tmin, tmax=tmax)
     D['segs']=segs
@@ -361,5 +365,12 @@ dictionary with the imported data.
         D['h22finite']=LoadH5_from_segments(segs, "GW2/rh_FiniteRadii_CodeUnits.h5",
             dataset_matches='.*Y_l2_m2.dat',
             verbose=verbosity>=2)
+    if extraH5Files:
+        for key,f in  extraH5Files.items():
+            if verbosity>=1:
+                print(f",\nextraH5File {f} --> {key}")
+            D[key]=  LoadH5_from_segments(segs,f, verbose=verbosity>=2)
+
+
     if verbosity==1: print("", flush=True)
     return D
