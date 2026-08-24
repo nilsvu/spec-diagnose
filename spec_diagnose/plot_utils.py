@@ -4,6 +4,7 @@ docstring of plot_utils.
 
 
 import re
+import numpy as np
 
 def AnnotateSegments(ax, RunDict, y=None, TerminationReason=False,
                      tref=0., font_size=None):
@@ -123,7 +124,7 @@ tref       -- use t-tref as xaxis
     return
 
 
-def PlotSubdomainConstraints(ax, GhCe, N=5, Ngrey=0):
+def PlotSubdomainConstraints(ax, GhCe, N=5, Ngrey=0, tsort=None):
     """
 Make a plot of constraints.
   ax -- axes to plot into
@@ -131,11 +132,25 @@ Make a plot of constraints.
   title -- title of plot
   N -- plot the N subdomains with largest GhCe
   Ngrey -- plot the next 'Ngrey' subdomains in grey
+  tsort -- time at which the constraint violations are extracted to sort them.
+           If ``None`` the absolute maxima are considered; if negative, it is
+           set to the last time step.
 """
     maxD={}
     for legend,data in GhCe.items():
         if legend=='time': continue
-        maxD[max(data[:,1])]=legend
+        if tsort is None:
+            maxD[max(data[:,1])]=legend
+        elif tsort < 0:
+            maxD[data[-1, 1]]=legend
+        elif data[0, 0] < tsort < data[-1, 0]:
+            # The value of the constraint is extracted via linear interpolation
+            idx=np.where(data[:, 0] < tsort)[0][-1]
+            m=(data[(idx+1), 1] - data[idx, 1])/(data[(idx+1), 0] - data[idx, 0])
+            interp_value=data[idx, 1] + m*(tsort - data[idx, 0])
+            maxD[interp_value]=legend
+    if not maxD:
+        raise ValueError(f"No simulation data available at t = {tsort}")
     biggest=sorted(maxD.keys(),reverse=True)
     if N>len(biggest): N=len(biggest)
     if N+Ngrey>len(biggest): Ngrey=len(biggest)-N
